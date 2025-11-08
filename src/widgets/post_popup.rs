@@ -1,4 +1,3 @@
-// widget.rs
 use {
     crate::models::E6Post,
     ratatui::{
@@ -8,43 +7,20 @@ use {
         text::{Line, Span, Text},
         widgets::{Block, Borders, Clear, Paragraph, StatefulWidget, Widget, Wrap},
     },
-    ratatui_image::{StatefulImage, picker::Picker, protocol::StatefulProtocol},
+    ratatui_image::{StatefulImage, protocol::StatefulProtocol},
 };
 
 pub struct E6PostPopupState {
-    pub image_state: Option<Box<StatefulProtocol>>,
+    pub image_protocol: Option<StatefulProtocol>,
     pub scroll_offset: u16,
 }
 
 impl E6PostPopupState {
     pub fn new() -> Self {
         Self {
-            image_state: None,
+            image_protocol: None,
             scroll_offset: 0,
         }
-    }
-
-    pub fn set_image(
-        &mut self,
-        picker: &mut Picker,
-        image_data: image::DynamicImage,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        self.image_state = Some(Box::new(picker.new_resize_protocol(image_data)));
-        Ok(())
-    }
-
-    pub fn scroll_up(&mut self) {
-        self.scroll_offset = self.scroll_offset.saturating_sub(1);
-    }
-
-    pub fn scroll_down(&mut self) {
-        self.scroll_offset = self.scroll_offset.saturating_add(1);
-    }
-}
-
-impl Default for E6PostPopupState {
-    fn default() -> Self {
-        Self::new()
     }
 }
 
@@ -219,7 +195,7 @@ impl<'a> E6PostPopup<'a> {
     }
 }
 
-impl StatefulWidget for E6PostPopup<'_> {
+impl<'a> StatefulWidget for E6PostPopup<'a> {
     type State = E6PostPopupState;
 
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
@@ -245,7 +221,7 @@ impl StatefulWidget for E6PostPopup<'_> {
             Layout::horizontal([Constraint::Percentage(50), Constraint::Percentage(50)]);
         let [image_area, info_area] = horizontal.areas(inner_area);
 
-        if let Some(ref mut image_state) = state.image_state {
+        if let Some(ref mut protocol) = state.image_protocol {
             let image_block = Block::default()
                 .borders(Borders::ALL)
                 .title("Preview")
@@ -255,7 +231,7 @@ impl StatefulWidget for E6PostPopup<'_> {
             image_block.render(image_area, buf);
 
             let image_widget = StatefulImage::default();
-            StatefulWidget::render(image_widget, image_inner, buf, image_state.as_mut());
+            StatefulWidget::render(image_widget, image_inner, buf, protocol);
         } else {
             let placeholder_block = Block::default()
                 .borders(Borders::ALL)

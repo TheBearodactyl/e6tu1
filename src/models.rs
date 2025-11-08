@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use {
     serde::{Deserialize, Serialize},
     std::collections::HashMap,
