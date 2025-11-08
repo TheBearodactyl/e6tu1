@@ -1,5 +1,5 @@
 use {
-    crate::models::E6Post,
+    crate::{anim::ImageProtocol, models::E6Post},
     ratatui::{
         buffer::Buffer,
         layout::{Constraint, Flex, Layout, Rect},
@@ -7,11 +7,11 @@ use {
         text::{Line, Span, Text},
         widgets::{Block, Borders, Clear, Paragraph, StatefulWidget, Widget, Wrap},
     },
-    ratatui_image::{StatefulImage, protocol::StatefulProtocol},
+    ratatui_image::{Resize, StatefulImage},
 };
 
 pub struct E6PostPopupState {
-    pub image_protocol: Option<StatefulProtocol>,
+    pub image_protocol: Option<ImageProtocol>,
     pub scroll_offset: u16,
 }
 
@@ -221,7 +221,9 @@ impl<'a> StatefulWidget for E6PostPopup<'a> {
             Layout::horizontal([Constraint::Percentage(50), Constraint::Percentage(50)]);
         let [image_area, info_area] = horizontal.areas(inner_area);
 
-        if let Some(ref mut protocol) = state.image_protocol {
+        if let Some(ref mut image_protocol) = state.image_protocol {
+            image_protocol.try_advance();
+
             let image_block = Block::default()
                 .borders(Borders::ALL)
                 .title("Preview")
@@ -230,7 +232,8 @@ impl<'a> StatefulWidget for E6PostPopup<'a> {
             let image_inner = image_block.inner(image_area);
             image_block.render(image_area, buf);
 
-            let image_widget = StatefulImage::default();
+            let protocol = image_protocol.current_protocol_mut();
+            let image_widget = StatefulImage::new().resize(Resize::Fit(None));
             StatefulWidget::render(image_widget, image_inner, buf, protocol);
         } else {
             let placeholder_block = Block::default()

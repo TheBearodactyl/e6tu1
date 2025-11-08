@@ -64,7 +64,6 @@ pub struct App {
     pub error_message: Option<String>,
     pub download_progress: Option<DownloadProgress>,
 
-    // Pending operations
     pending_search: bool,
     pending_fetch: bool,
     pending_load_image: bool,
@@ -100,8 +99,8 @@ impl App {
     }
 
     pub async fn handle_event(&mut self, event: AppEvent) -> Result<bool> {
-        if let AppEvent::Key(key) = event {
-            match self.state {
+        match event {
+            AppEvent::Key(key) => match self.state {
                 AppState::Input => self.handle_input_key(key),
                 AppState::Loading => {}
                 AppState::SearchResults => self.handle_search_results_key(key),
@@ -110,6 +109,11 @@ impl App {
                 AppState::Error => {
                     self.state = AppState::Input;
                     self.error_message = None;
+                }
+            },
+            AppEvent::Tick => {
+                if let Some(ref mut protocol) = self.popup_state.image_protocol {
+                    protocol.try_advance();
                 }
             }
         }
@@ -292,7 +296,6 @@ impl App {
         }
     }
 
-    // Input handling methods
     pub fn active_input(&self) -> &str {
         match self.input_mode {
             InputMode::TagSearch => &self.tag_input,
@@ -386,7 +389,6 @@ impl App {
         };
     }
 
-    // API operations
     async fn search_posts(&mut self) -> Result<()> {
         let posts = self.client.search_posts(&self.tag_input).await?;
 
@@ -405,6 +407,7 @@ impl App {
     async fn fetch_post(&mut self) -> Result<()> {
         let post = self.client.fetch_post(&self.id_input).await?;
         self.post = Some(post);
+        self.search_results.clear();
         self.state = AppState::Viewing;
         self.popup_state = E6PostPopupState::new();
         Ok(())
@@ -414,9 +417,12 @@ impl App {
         if let Some(ref post) = self.post
             && let Some(ref url) = post.file.url
         {
-            let img = self.client.download_image(url).await?;
-            self.popup_state.image_protocol = Some(self.picker.new_resize_protocol(img));
+            let img = self.client.download_image_bytes(url).await?;
+            let protocol = crate::anim::protocols_from_animated_bytes(&img, &mut self.picker)?;
+
+            self.popup_state.image_protocol = Some(protocol);
         }
+
         Ok(())
     }
 

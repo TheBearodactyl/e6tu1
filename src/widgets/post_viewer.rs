@@ -1,12 +1,12 @@
 use {
-    crate::models::E6Post,
+    crate::{anim::ImageProtocol, models::E6Post},
     ratatui::{
         buffer::Buffer,
         layout::Rect,
         style::{Color, Modifier, Style},
         widgets::{Block, Borders, Clear, Paragraph, StatefulWidget, Widget},
     },
-    ratatui_image::{StatefulImage, protocol::StatefulProtocol},
+    ratatui_image::{Resize, StatefulImage},
 };
 
 pub struct PostViewer<'a> {
@@ -20,7 +20,7 @@ impl<'a> PostViewer<'a> {
 }
 
 impl<'a> StatefulWidget for PostViewer<'a> {
-    type State = Option<StatefulProtocol>;
+    type State = Option<ImageProtocol>;
 
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
         Clear.render(area, buf);
@@ -38,8 +38,11 @@ impl<'a> StatefulWidget for PostViewer<'a> {
         let inner = block.inner(area);
         block.render(area, buf);
 
-        if let Some(protocol) = state {
-            let image_widget = StatefulImage::default();
+        if let Some(image_protocol) = state {
+            image_protocol.try_advance();
+
+            let protocol = image_protocol.current_protocol_mut();
+            let image_widget = StatefulImage::new().resize(Resize::Fit(None));
             StatefulWidget::render(image_widget, inner, buf, protocol);
         } else {
             let placeholder = Paragraph::new("Loading image...")

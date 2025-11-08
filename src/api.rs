@@ -64,11 +64,11 @@ impl E621Client {
         Ok(post_response.post)
     }
 
-    pub async fn download_image(&self, url: &str) -> Result<image::DynamicImage> {
+    pub async fn download_image_bytes(&self, url: &str) -> Result<Vec<u8>> {
         let response = self.client.get(url).send().await?;
         let bytes = response.bytes().await?;
-        let img = image::load_from_memory(&bytes)?;
-        Ok(img)
+
+        Ok(bytes.to_vec())
     }
 
     pub async fn download_post_to_file(
