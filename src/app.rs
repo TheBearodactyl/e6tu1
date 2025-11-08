@@ -1,6 +1,9 @@
 use {
     crate::{
-        api::E621Client, event::AppEvent, models::E6Post, widgets::post_popup::E6PostPopupState,
+        api::{BASE_URL, E621Client},
+        event::AppEvent,
+        models::E6Post,
+        widgets::post_popup::E6PostPopupState,
     },
     color_eyre::eyre::Result,
     crossterm::event::KeyCode,
@@ -418,7 +421,8 @@ impl App {
             && let Some(ref url) = post.file.url
         {
             let img = self.client.download_image_bytes(url).await?;
-            let protocol = crate::anim::protocols_from_animated_bytes(&img, &mut self.picker)?;
+            let protocol =
+                crate::anim::protocols_from_animated_bytes(&img, &mut self.picker, 60.0)?;
 
             self.popup_state.image_protocol = Some(protocol);
         }
@@ -437,7 +441,7 @@ impl App {
 
     fn open_in_browser(&self) -> Result<()> {
         if let Some(ref post) = self.post {
-            let url = format!("https://e621.net/posts/{}", post.id);
+            let url = format!("https://{}/posts/{}", BASE_URL, post.id);
             open::that(url)?;
         }
         Ok(())

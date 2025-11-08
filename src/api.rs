@@ -11,8 +11,8 @@ use {
     },
 };
 
-const USER_AGENT: &str = "E6TU1/1.0 (by bearodactyl on e621)";
-const BASE_URL: &str = "https://e621.net";
+pub const USER_AGENT: &str = "E6TU1/1.0 (by bearodactyl on e621)";
+pub const BASE_URL: &str = "https://e621.net";
 
 pub struct E621Client {
     client: reqwest::Client,
